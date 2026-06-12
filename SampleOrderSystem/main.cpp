@@ -34,7 +34,7 @@ int wmain() {
     initConsole();
 
     // 1분 = 5초 (테스트 편의용; 실운영 시 60.0으로 변경)
-    constexpr double kTimeScaleSecPerMin = 5.0;
+    constexpr double kTimeScaleSecPerMin = 1.0;
 
     // ── Repositories ────────────────────────────────────────────────────────
     SampleRepository        sampleRepo("data/samples.json");
