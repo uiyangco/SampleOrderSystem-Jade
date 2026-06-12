@@ -43,23 +43,15 @@ TEST(OrderControllerTest, Approve_WhenStockSufficient_ShortageZero) {
 
     Sample s; s.setId(2); s.stock = 10; s.yield = 0.9; s.avgProductionTime = 5;
 
-    // 다른 주문 없음 → effective=10, shortage=0, targetQty=0
+    // 다른 주문 없음 → effective=10, shortage=0 → 잡 없이 바로 CONFIRMED
     EXPECT_CALL(orderRepo, read(10)).WillOnce(Return(o));
     EXPECT_CALL(sampleRepo, read(2)).WillOnce(Return(s));
     EXPECT_CALL(orderRepo,  readAll()).WillOnce(Return(std::vector<Order>{}));
     EXPECT_CALL(sampleRepo, update(_)).Times(0);
-    EXPECT_CALL(jobRepo, create(_))
-        .WillOnce(Invoke([](ProductionJob& job) {
-            EXPECT_EQ(job.shortage,     0);
-            EXPECT_EQ(job.targetQty,    0);
-            EXPECT_EQ(job.totalMinutes, 0);
-            EXPECT_EQ(job.status, JobStatus::WAITING);
-            job.setId(1);
-            return true;
-        }));
+    EXPECT_CALL(jobRepo,    create(_)).Times(0);
     EXPECT_CALL(orderRepo, update(_))
         .WillOnce(Invoke([](const Order& updated) {
-            EXPECT_EQ(updated.status, OrderStatus::PRODUCING);
+            EXPECT_EQ(updated.status, OrderStatus::CONFIRMED);
             return true;
         }));
 
@@ -191,15 +183,12 @@ TEST(OrderControllerTest, Approve_StockCoversProducingAndNew_ShortageZero) {
     EXPECT_CALL(sampleRepo, read(6)).WillOnce(Return(s));
     EXPECT_CALL(orderRepo,  readAll()).WillOnce(Return(std::vector<Order>{producing}));
     EXPECT_CALL(sampleRepo, update(_)).Times(0);
-    EXPECT_CALL(jobRepo, create(_))
-        .WillOnce(Invoke([](ProductionJob& job) {
-            EXPECT_EQ(job.shortage,     0);
-            EXPECT_EQ(job.targetQty,    0);
-            EXPECT_EQ(job.totalMinutes, 0);
-            job.setId(3);
+    EXPECT_CALL(jobRepo,    create(_)).Times(0);
+    EXPECT_CALL(orderRepo, update(_))
+        .WillOnce(Invoke([](const Order& updated) {
+            EXPECT_EQ(updated.status, OrderStatus::CONFIRMED);
             return true;
         }));
-    EXPECT_CALL(orderRepo, update(_)).WillOnce(Return(true));
 
     OrderController ctrl(orderRepo, sampleRepo, jobRepo);
     ctrl.approve(41);
