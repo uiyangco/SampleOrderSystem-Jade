@@ -17,7 +17,7 @@ public:
     void reserve(int sampleId, const std::wstring& customerName, int quantity);
     void approve(int orderId);
     void reject(int orderId);
-    void processRelease(int orderId);
+    bool processRelease(int orderId);  // false = 재고 부족
 
 private:
     IRepository<Order>&         orderRepo_;

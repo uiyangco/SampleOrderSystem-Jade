@@ -37,13 +37,20 @@ void ProductionView::showProductionStatus(
             ? static_cast<int>(std::min(elapsedMin / job.totalMinutes * 100.0, 100.0))
             : 0;
 
+        // 로딩바: [████████░░░░░░░░░░░░] 40%
+        constexpr int kBarWidth = 20;
+        int filled = pct * kBarWidth / 100;
+        std::wstring bar = L"[";
+        for (int i = 0; i < kBarWidth; ++i)
+            bar += (i < filled) ? L"█" : L"░";
+        bar += L"]";
+
         ui_.printLine(
             L"  주문#" + std::to_wstring(job.orderId) +
             L"  시료:" + findSampleName(job.sampleId, samples) +
             L"  고객:" + findCustomerName(job.orderId, orders) +
-            L"  목표:" + std::to_wstring(job.targetQty) +
-            L"개  총시간:" + std::to_wstring(job.totalMinutes) +
-            L"분  진행:" + std::to_wstring(pct) + L"%",
+            L"  목표:" + std::to_wstring(job.targetQty) + L"개" +
+            L"  " + bar + L" " + std::to_wstring(pct) + L"%",
             ConsoleUI::GREEN);
     }
     if (!hasRunning) ui_.printLine(L"  (생산 중인 작업 없음)", ConsoleUI::GRAY);

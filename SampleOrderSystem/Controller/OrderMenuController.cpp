@@ -58,8 +58,11 @@ void OrderMenuController::runRelease() {
             continue;
         }
 
-        ctrl_.processRelease(id);
-        ui_.printSuccess(L"출고 처리 완료. (RELEASE)");
+        if (!ctrl_.processRelease(id)) {
+            ui_.printError(L"재고가 부족합니다. 출고할 수 없습니다.");
+        } else {
+            ui_.printSuccess(L"출고 처리 완료. (RELEASE)");
+        }
         ui_.inputLine(L"엔터를 눌러 계속...");
         return;
     }
