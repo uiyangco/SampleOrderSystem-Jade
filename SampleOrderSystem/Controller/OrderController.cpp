@@ -41,7 +41,7 @@ void OrderController::approve(int orderId) {
     for (const auto& j : allJobs) {
         if (j.sampleId != order.sampleId) continue;
         if (j.status == JobStatus::WAITING || j.status == JobStatus::RUNNING)
-            plannedProduction += j.targetQty;
+            plannedProduction += j.targetQty - j.producedQty;
     }
 
     int effective = sample.stock - committedFromStock + plannedProduction - committedFromJobs;
