@@ -6,7 +6,25 @@
 
 void ProductionThread::start() {
     running_.store(true);
+    adjustStartedAtForResume();
     thread_ = std::thread(&ProductionThread::loop, this);
+}
+
+void ProductionThread::adjustStartedAtForResume() {
+    auto jobs = jobRepo_.readAll();
+    auto runningIt = std::find_if(jobs.begin(), jobs.end(),
+        [](const ProductionJob& j) -> bool { return j.status == JobStatus::RUNNING; });
+    if (runningIt == jobs.end()) return;
+
+    ProductionJob job = *runningIt;
+    if (job.targetQty <= 0 || job.producedQty >= job.targetQty) return;
+
+    // 이미 생산된 수량에 해당하는 경과 시간만큼 startedAtMs를 현재 기준으로 재계산
+    double perUnitMin      = static_cast<double>(job.totalMinutes) / job.targetQty;
+    double alreadyMin      = job.producedQty * perUnitMin;
+    int64_t alreadyMs      = static_cast<int64_t>(alreadyMin * timeScale_ * 1000.0);
+    job.startedAtMs        = Utils::nowMs() - alreadyMs;
+    jobRepo_.update(job);
 }
 
 void ProductionThread::stop() {

@@ -27,6 +27,7 @@ private:
     void tick();
     void completeJob(const ProductionJob& job);
     void startNextWaiting(const std::vector<ProductionJob>& jobs);
+    void adjustStartedAtForResume();
 
     IRepository<ProductionJob>& jobRepo_;
     IRepository<Order>&         orderRepo_;
