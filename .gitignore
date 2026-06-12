@@ -1,0 +1,31 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.aps
+*.ncb
+*.sdf
+*.opensdf
+ipch/
+
+# Build output
+x64/
+x86/
+Debug/
+Release/
+*.exe
+*.dll
+*.lib
+*.obj
+*.pdb
+*.idb
+*.ilk
+*.exp
+*.tlog/
+
+# NuGet packages
+packages/
+
+# CMake (혹시 나중에 사용 시)
+CMakeSettings.json
+out/
