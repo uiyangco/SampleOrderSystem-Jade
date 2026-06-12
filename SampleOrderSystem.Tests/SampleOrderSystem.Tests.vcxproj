@@ -87,8 +87,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 테스트 파일은 TDD 사이클 진행에 따라 추가됨 -->
-    <!-- 예: <ClCompile Include="OrderControllerTest.cpp" /> -->
+    <ClCompile Include="JsonValueTest.cpp" />
   </ItemGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
