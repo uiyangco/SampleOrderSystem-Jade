@@ -81,6 +81,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -99,6 +100,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -115,6 +117,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,6 +136,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,7 +147,50 @@
     </Manifest>
   </ItemDefinitionGroup>
 
-  <ItemGroup></ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="json\JsonParser.cpp" />
+    <ClCompile Include="json\JsonSerializer.cpp" />
+    <ClCompile Include="Model\Sample.cpp" />
+    <ClCompile Include="Model\Order.cpp" />
+    <ClCompile Include="Model\ProductionJob.cpp" />
+    <ClCompile Include="View\ConsoleUI.cpp" />
+    <ClCompile Include="View\SampleView.cpp" />
+    <ClCompile Include="View\OrderView.cpp" />
+    <ClCompile Include="View\ProductionView.cpp" />
+    <ClCompile Include="View\MonitorView.cpp" />
+    <ClCompile Include="Controller\SampleController.cpp" />
+    <ClCompile Include="Controller\OrderController.cpp" />
+    <ClCompile Include="Controller\OrderMenuController.cpp" />
+    <ClCompile Include="Controller\ProductionController.cpp" />
+    <ClCompile Include="Controller\MonitorController.cpp" />
+    <ClCompile Include="Monitor\ProductionThread.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Utils.h" />
+    <ClInclude Include="json\JsonValue.h" />
+    <ClInclude Include="json\JsonParser.h" />
+    <ClInclude Include="json\JsonSerializer.h" />
+    <ClInclude Include="Model\Sample.h" />
+    <ClInclude Include="Model\Order.h" />
+    <ClInclude Include="Model\ProductionJob.h" />
+    <ClInclude Include="Model\Repository\IRepository.h" />
+    <ClInclude Include="Model\Repository\JsonRepository.h" />
+    <ClInclude Include="Model\Repository\SampleRepository.h" />
+    <ClInclude Include="Model\Repository\OrderRepository.h" />
+    <ClInclude Include="Model\Repository\ProductionJobRepository.h" />
+    <ClInclude Include="View\ConsoleUI.h" />
+    <ClInclude Include="View\SampleView.h" />
+    <ClInclude Include="View\OrderView.h" />
+    <ClInclude Include="View\ProductionView.h" />
+    <ClInclude Include="View\MonitorView.h" />
+    <ClInclude Include="Controller\SampleController.h" />
+    <ClInclude Include="Controller\OrderController.h" />
+    <ClInclude Include="Controller\OrderMenuController.h" />
+    <ClInclude Include="Controller\ProductionController.h" />
+    <ClInclude Include="Controller\MonitorController.h" />
+    <ClInclude Include="Monitor\ProductionThread.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
