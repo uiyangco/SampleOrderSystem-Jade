@@ -21,12 +21,19 @@ void SampleController::run() {
     }
 }
 
-bool SampleController::isDuplicateName(const std::wstring&) const {
-    return false;
+bool SampleController::isDuplicateName(const std::wstring& name) const {
+    auto existing = repo_.readAll();
+    return std::any_of(existing.begin(), existing.end(),
+        [&name](const Sample& s) { return s.name == name; });
 }
 
 void SampleController::doRegister() {
-    Sample s  = view_.promptForSample();
+    Sample s = view_.promptForSample();
+    if (isDuplicateName(s.name)) {
+        ui_.printError(L"이미 존재하는 시료명입니다: " + s.name);
+        ui_.inputLine(L"엔터를 눌러 계속...");
+        return;
+    }
     s.createdAt = Utils::nowWstring();
     repo_.create(s);
     ui_.printSuccess(L"시료 등록 완료 (ID: " + std::to_wstring(s.getId()) + L")");
