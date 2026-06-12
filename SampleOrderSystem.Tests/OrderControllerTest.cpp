@@ -43,11 +43,10 @@ TEST(OrderControllerTest, Approve_WhenStockSufficient_ShortageZero) {
 
     Sample s; s.setId(2); s.stock = 10; s.yield = 0.9; s.avgProductionTime = 5;
 
-    // 다른 주문/잡 없음 → effective=10, shortage=0, targetQty=0
+    // 다른 주문 없음 → effective=10, shortage=0, targetQty=0
     EXPECT_CALL(orderRepo, read(10)).WillOnce(Return(o));
     EXPECT_CALL(sampleRepo, read(2)).WillOnce(Return(s));
     EXPECT_CALL(orderRepo,  readAll()).WillOnce(Return(std::vector<Order>{}));
-    EXPECT_CALL(jobRepo,    readAll()).WillOnce(Return(std::vector<ProductionJob>{}));
     EXPECT_CALL(sampleRepo, update(_)).Times(0);
     EXPECT_CALL(jobRepo, create(_))
         .WillOnce(Invoke([](ProductionJob& job) {
@@ -84,7 +83,6 @@ TEST(OrderControllerTest, Approve_WhenStockInsufficient_UsesYieldFormula) {
     EXPECT_CALL(orderRepo, read(11)).WillOnce(Return(o));
     EXPECT_CALL(sampleRepo, read(3)).WillOnce(Return(s));
     EXPECT_CALL(orderRepo,  readAll()).WillOnce(Return(std::vector<Order>{}));
-    EXPECT_CALL(jobRepo,    readAll()).WillOnce(Return(std::vector<ProductionJob>{}));
     EXPECT_CALL(sampleRepo, update(_)).Times(0);
     EXPECT_CALL(jobRepo, create(_))
         .WillOnce(Invoke([](ProductionJob& job) {
@@ -121,7 +119,6 @@ TEST(OrderControllerTest, Approve_WhenYieldIsZero_UsesShortageAsTargetQty) {
     EXPECT_CALL(orderRepo, read(12)).WillOnce(Return(o));
     EXPECT_CALL(sampleRepo, read(9)).WillOnce(Return(s));
     EXPECT_CALL(orderRepo,  readAll()).WillOnce(Return(std::vector<Order>{}));
-    EXPECT_CALL(jobRepo,    readAll()).WillOnce(Return(std::vector<ProductionJob>{}));
     EXPECT_CALL(sampleRepo, update(_)).Times(0);
     EXPECT_CALL(jobRepo, create(_))
         .WillOnce(Invoke([](ProductionJob& job) {
@@ -137,9 +134,9 @@ TEST(OrderControllerTest, Approve_WhenYieldIsZero_UsesShortageAsTargetQty) {
     ctrl.approve(12);
 }
 
-// ── approve: RUNNING 잡은 잔여 생산량(targetQty-producedQty)만 계산에 포함 ───
+// ── approve: PRODUCING 주문량만 재고에서 차감, 잡 예정 생산량 불포함 ────────────
 
-TEST(OrderControllerTest, Approve_WithRunningJob_OnlyCountsRemainingProduction) {
+TEST(OrderControllerTest, Approve_WithRunningJob_StockMinusProducingCommitment) {
     MockOrderRepository         orderRepo;
     MockSampleRepository        sampleRepo;
     MockProductionJobRepository jobRepo;
@@ -147,31 +144,23 @@ TEST(OrderControllerTest, Approve_WithRunningJob_OnlyCountsRemainingProduction) 
     Order newOrder; newOrder.setId(40); newOrder.sampleId = 6; newOrder.quantity = 25;
     newOrder.status = OrderStatus::RESERVED;
 
-    // stock=40 (running job이 이미 40개 생산 → 재고 반영됨)
-    // running job: targetQty=50, producedQty=40 → 잔여=10
-    // producing order: qty=30
-    // effective = 40 + (50-40) - 0 - 30 = 20
-    // shortage = 25-20 = 5, targetQty = ceil(5/0.81) = 7
+    // stock=40 (running job이 40개 생산해서 재고에 반영된 상태)
+    // PRODUCING order qty=30 → effective = 40 - 30 = 10
+    // shortage = 25-10 = 15, targetQty = ceil(15/0.81) = 19
     Sample s; s.setId(6); s.stock = 40; s.yield = 0.9; s.avgProductionTime = 5;
 
     Order producing; producing.setId(7); producing.sampleId = 6;
     producing.quantity = 30; producing.status = OrderStatus::PRODUCING;
 
-    ProductionJob runningJob; runningJob.setId(1);
-    runningJob.orderId = 7; runningJob.sampleId = 6;
-    runningJob.targetQty = 50; runningJob.producedQty = 40;
-    runningJob.status = JobStatus::RUNNING;
-
     EXPECT_CALL(orderRepo, read(40)).WillOnce(Return(newOrder));
     EXPECT_CALL(sampleRepo, read(6)).WillOnce(Return(s));
     EXPECT_CALL(orderRepo,  readAll()).WillOnce(Return(std::vector<Order>{producing}));
-    EXPECT_CALL(jobRepo,    readAll()).WillOnce(Return(std::vector<ProductionJob>{runningJob}));
     EXPECT_CALL(sampleRepo, update(_)).Times(0);
     EXPECT_CALL(jobRepo, create(_))
         .WillOnce(Invoke([](ProductionJob& job) {
-            EXPECT_EQ(job.shortage,     5);
-            EXPECT_EQ(job.targetQty,    7);    // ceil(5/0.81)
-            EXPECT_EQ(job.totalMinutes, 35);   // 5 * 7
+            EXPECT_EQ(job.shortage,     15);
+            EXPECT_EQ(job.targetQty,    19);   // ceil(15/0.81)
+            EXPECT_EQ(job.totalMinutes, 95);   // 5 * 19
             job.setId(2);
             return true;
         }));
@@ -179,6 +168,41 @@ TEST(OrderControllerTest, Approve_WithRunningJob_OnlyCountsRemainingProduction) 
 
     OrderController ctrl(orderRepo, sampleRepo, jobRepo);
     ctrl.approve(40);
+}
+
+// ── approve: 재고가 PRODUCING+새주문량 커버 시 바로 confirmed ─────────────────
+
+TEST(OrderControllerTest, Approve_StockCoversProducingAndNew_ShortageZero) {
+    MockOrderRepository         orderRepo;
+    MockSampleRepository        sampleRepo;
+    MockProductionJobRepository jobRepo;
+
+    Order newOrder; newOrder.setId(41); newOrder.sampleId = 6; newOrder.quantity = 20;
+    newOrder.status = OrderStatus::RESERVED;
+
+    // stock=121, PRODUCING order qty=100 → effective = 121-100 = 21 >= 20
+    // shortage=0, targetQty=0 → 즉시 confirmed
+    Sample s; s.setId(6); s.stock = 121; s.yield = 0.9; s.avgProductionTime = 5;
+
+    Order producing; producing.setId(8); producing.sampleId = 6;
+    producing.quantity = 100; producing.status = OrderStatus::PRODUCING;
+
+    EXPECT_CALL(orderRepo, read(41)).WillOnce(Return(newOrder));
+    EXPECT_CALL(sampleRepo, read(6)).WillOnce(Return(s));
+    EXPECT_CALL(orderRepo,  readAll()).WillOnce(Return(std::vector<Order>{producing}));
+    EXPECT_CALL(sampleRepo, update(_)).Times(0);
+    EXPECT_CALL(jobRepo, create(_))
+        .WillOnce(Invoke([](ProductionJob& job) {
+            EXPECT_EQ(job.shortage,     0);
+            EXPECT_EQ(job.targetQty,    0);
+            EXPECT_EQ(job.totalMinutes, 0);
+            job.setId(3);
+            return true;
+        }));
+    EXPECT_CALL(orderRepo, update(_)).WillOnce(Return(true));
+
+    OrderController ctrl(orderRepo, sampleRepo, jobRepo);
+    ctrl.approve(41);
 }
 
 // ── approve: 앞선 CONFIRMED 주문이 재고를 선점한 경우 ────────────────────────
@@ -201,7 +225,6 @@ TEST(OrderControllerTest, Approve_WithExistingConfirmedOrder_AccountsForCommitte
     EXPECT_CALL(orderRepo, read(20)).WillOnce(Return(newOrder));
     EXPECT_CALL(sampleRepo, read(4)).WillOnce(Return(s));
     EXPECT_CALL(orderRepo,  readAll()).WillOnce(Return(std::vector<Order>{confirmed}));
-    EXPECT_CALL(jobRepo,    readAll()).WillOnce(Return(std::vector<ProductionJob>{}));
     EXPECT_CALL(sampleRepo, update(_)).Times(0);
     EXPECT_CALL(jobRepo, create(_))
         .WillOnce(Invoke([](ProductionJob& job) {
@@ -217,9 +240,9 @@ TEST(OrderControllerTest, Approve_WithExistingConfirmedOrder_AccountsForCommitte
     ctrl.approve(20);
 }
 
-// ── approve: 앞선 PRODUCING 잡의 예정 생산량을 고려한 부족분 계산 ─────────────
+// ── approve: PRODUCING 주문량을 재고에서 차감해 부족분 계산 ──────────────────
 
-TEST(OrderControllerTest, Approve_WithExistingProducingJob_AccountsForPlannedProduction) {
+TEST(OrderControllerTest, Approve_WithProducingOrder_DeductsQtyFromStock) {
     MockOrderRepository         orderRepo;
     MockSampleRepository        sampleRepo;
     MockProductionJobRepository jobRepo;
@@ -229,26 +252,20 @@ TEST(OrderControllerTest, Approve_WithExistingProducingJob_AccountsForPlannedPro
 
     Sample s; s.setId(5); s.stock = 2; s.yield = 0.9; s.avgProductionTime = 5;
 
-    // 기존 PRODUCING 주문 qty=3, 그 잡 targetQty=4 (WAITING)
-    // effective = 2 + 4(예정) - 3(선점) = 3, shortage=5-3=2
-    // targetQty = ceil(2/0.81) = ceil(2.469) = 3
+    // PRODUCING 주문 qty=3 → effective = 2 - 3 = -1 → max(0,-1)=0
+    // shortage = 5-0 = 5, targetQty = ceil(5/0.81) = 7
     Order producing; producing.setId(6); producing.sampleId = 5;
     producing.quantity = 3; producing.status = OrderStatus::PRODUCING;
-
-    ProductionJob existingJob; existingJob.setId(1);
-    existingJob.orderId = 6; existingJob.sampleId = 5;
-    existingJob.targetQty = 4; existingJob.status = JobStatus::WAITING;
 
     EXPECT_CALL(orderRepo, read(30)).WillOnce(Return(newOrder));
     EXPECT_CALL(sampleRepo, read(5)).WillOnce(Return(s));
     EXPECT_CALL(orderRepo,  readAll()).WillOnce(Return(std::vector<Order>{producing}));
-    EXPECT_CALL(jobRepo,    readAll()).WillOnce(Return(std::vector<ProductionJob>{existingJob}));
     EXPECT_CALL(sampleRepo, update(_)).Times(0);
     EXPECT_CALL(jobRepo, create(_))
         .WillOnce(Invoke([](ProductionJob& job) {
-            EXPECT_EQ(job.shortage,     2);
-            EXPECT_EQ(job.targetQty,    3);    // ceil(2/0.81)
-            EXPECT_EQ(job.totalMinutes, 15);   // 5 * 3
+            EXPECT_EQ(job.shortage,     5);
+            EXPECT_EQ(job.targetQty,    7);    // ceil(5/0.81)
+            EXPECT_EQ(job.totalMinutes, 35);   // 5 * 7
             job.setId(2);
             return true;
         }));
