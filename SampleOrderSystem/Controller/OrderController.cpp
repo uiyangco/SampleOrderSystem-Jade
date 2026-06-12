@@ -25,26 +25,17 @@ void OrderController::approve(int orderId) {
     if (!sampleOpt) return;
     const Sample& sample = *sampleOpt;
 
-    // 큐 고려 유효 가용량 계산
+    // 유효 가용량 = 현재재고 - (CONFIRMED+PRODUCING 주문이 선점한 수량)
     auto allOrders = orderRepo_.readAll();
-    auto allJobs   = jobRepo_.readAll();
 
-    int committedFromStock = 0;  // CONFIRMED 주문이 선점한 재고
-    int committedFromJobs  = 0;  // PRODUCING 주문이 선점한 생산 예정량
-    int plannedProduction  = 0;  // WAITING/RUNNING 잡의 예정 생산량
-
+    int committed = 0;
     for (const auto& o : allOrders) {
         if (o.sampleId != order.sampleId) continue;
-        if (o.status == OrderStatus::CONFIRMED) committedFromStock += o.quantity;
-        if (o.status == OrderStatus::PRODUCING) committedFromJobs  += o.quantity;
-    }
-    for (const auto& j : allJobs) {
-        if (j.sampleId != order.sampleId) continue;
-        if (j.status == JobStatus::WAITING || j.status == JobStatus::RUNNING)
-            plannedProduction += j.targetQty - j.producedQty;
+        if (o.status == OrderStatus::CONFIRMED || o.status == OrderStatus::PRODUCING)
+            committed += o.quantity;
     }
 
-    int effective = sample.stock - committedFromStock + plannedProduction - committedFromJobs;
+    int effective = sample.stock - committed;
     int shortage  = (std::max)(0, order.quantity - (std::max)(0, effective));
 
     int targetQty = 0;
