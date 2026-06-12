@@ -39,8 +39,7 @@ Sample SampleView::promptForSample() {
     Sample s;
     s.name              = ui_.inputLine(L"  이름: ");
     s.avgProductionTime = ui_.inputInt(L"  평균 생산시간(분/개): ");
-    int yieldPct        = ui_.inputInt(L"  수율(%): ");
-    s.yield             = yieldPct / 100.0;
+    s.yield             = ui_.inputDouble(L"  수율 (0.0 ~ 1.0, 예: 0.92): ", 0.0, 1.0);
     s.stock             = ui_.inputInt(L"  초기 재고: ");
     return s;
 }

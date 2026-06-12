@@ -1,5 +1,6 @@
 #include "ConsoleUI.h"
 #include <iostream>
+#include <sstream>
 #include <io.h>
 #include <fcntl.h>
 
@@ -65,6 +66,21 @@ int ConsoleUI::inputInt(const std::wstring& prompt) {
         std::wstring s = inputLine(prompt);
         try {
             return std::stoi(s);
+        } catch (...) {
+            printError(L"숫자를 입력하세요.");
+        }
+    }
+}
+
+double ConsoleUI::inputDouble(const std::wstring& prompt, double minVal, double maxVal) {
+    while (true) {
+        std::wstring s = inputLine(prompt);
+        try {
+            double v = std::stod(s);
+            if (v >= minVal && v <= maxVal) return v;
+            std::wostringstream msg;
+            msg << L"범위를 벗어났습니다 (" << minVal << L" ~ " << maxVal << L").";
+            printError(msg.str());
         } catch (...) {
             printError(L"숫자를 입력하세요.");
         }

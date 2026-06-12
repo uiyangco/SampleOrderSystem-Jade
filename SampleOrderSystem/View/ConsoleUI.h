@@ -24,6 +24,7 @@ public:
 
     std::wstring inputLine(const std::wstring& prompt);
     int          inputInt(const std::wstring& prompt);
+    double       inputDouble(const std::wstring& prompt, double minVal, double maxVal);
 
 private:
     void setColor(WORD color);
