@@ -59,13 +59,12 @@ void OrderView::showOrdersByStatus(const std::vector<Order>& orders,
 }
 
 int OrderView::promptOrderId(const std::wstring& action) {
-    return ui_.inputInt(L"  " + action + L"할 주문 ID: ");
+    return ui_.inputInt(L"  " + action + L"할 주문 ID (0=뒤로): ");
 }
 
-bool OrderView::promptApproveOrReject() {
-    ui_.printLine(L"  1. 승인  2. 거절", ConsoleUI::WHITE);
-    int c = ui_.inputInt(L"  선택: ");
-    return c == 1;
+int OrderView::promptApproveOrReject() {
+    ui_.printLine(L"  1. 승인  2. 거절  0. 뒤로", ConsoleUI::WHITE);
+    return ui_.inputInt(L"  선택: ");
 }
 
 OrderView::ReserveInput OrderView::promptForOrder(const std::vector<Sample>& samples) {
@@ -75,7 +74,8 @@ OrderView::ReserveInput OrderView::promptForOrder(const std::vector<Sample>& sam
                       L"  재고:" + std::to_wstring(s.stock), ConsoleUI::WHITE);
     ui_.printSeparator();
     ReserveInput in;
-    in.sampleId     = ui_.inputInt(L"  시료 ID: ");
+    in.sampleId     = ui_.inputInt(L"  시료 ID (0=뒤로): ");
+    if (in.sampleId == 0) return in;
     in.customerName = ui_.inputLine(L"  고객명: ");
     in.quantity     = ui_.inputInt(L"  수량: ");
     return in;

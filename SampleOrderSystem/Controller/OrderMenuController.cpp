@@ -8,6 +8,7 @@ void OrderMenuController::runReserve() {
         return;
     }
     auto in = view_.promptForOrder(samples);
+    if (in.sampleId == 0) return;
     ctrl_.reserve(in.sampleId, in.customerName, in.quantity);
     ui_.printSuccess(L"주문이 접수되었습니다. (RESERVED)");
     ui_.inputLine(L"엔터를 눌러 계속...");
@@ -28,7 +29,9 @@ void OrderMenuController::runApproveReject() {
             continue;
         }
 
-        if (view_.promptApproveOrReject()) {
+        int choice = view_.promptApproveOrReject();
+        if (choice == 0) continue;
+        if (choice == 1) {
             ctrl_.approve(id);
             ui_.printSuccess(L"주문 승인 처리 완료.");
         } else {

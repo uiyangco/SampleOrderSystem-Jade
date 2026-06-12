@@ -13,7 +13,7 @@ public:
     void showOrdersByStatus(const std::vector<Order>& orders, const std::vector<Sample>& samples);
 
     int  promptOrderId(const std::wstring& action);
-    bool promptApproveOrReject();
+    int  promptApproveOrReject();  // 0=뒤로, 1=승인, 2=거절
 
     struct ReserveInput { int sampleId; std::wstring customerName; int quantity; };
     ReserveInput promptForOrder(const std::vector<Sample>& samples);

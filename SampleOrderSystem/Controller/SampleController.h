@@ -15,6 +15,7 @@ private:
     void doRegister();
     void doList();
     void doSearch();
+    void doRemove();
 
     IRepository<Sample>& repo_;
     SampleView&          view_;
