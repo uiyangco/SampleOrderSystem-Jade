@@ -80,6 +80,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TestMain.cpp" />
+    <ClCompile Include="ProductionCalcTest.cpp" />
     <ClCompile Include="JsonValueTest.cpp" />
     <ClCompile Include="SampleModelTest.cpp" />
     <ClCompile Include="SampleControllerTest.cpp" />
