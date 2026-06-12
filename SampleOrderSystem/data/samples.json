@@ -1,21 +1,4 @@
 {
-  "data": [
-    {
-      "avgProductionTime": 1,
-      "createdAt": "2026-06-12 14:40:56",
-      "id": 1,
-      "name": "s1",
-      "stock": 23,
-      "yield": 0.2
-    },
-    {
-      "avgProductionTime": 1,
-      "createdAt": "2026-06-12 14:41:19",
-      "id": 2,
-      "name": "s2",
-      "stock": 10,
-      "yield": 0.5
-    }
-  ],
-  "nextId": 3
+  "data": [],
+  "nextId": 1
 }

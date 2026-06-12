@@ -1,23 +1,4 @@
 {
-  "data": [
-    {
-      "createdAt": "2026-06-12 14:41:31",
-      "customerName": "c1",
-      "id": 1,
-      "quantity": 20,
-      "sampleId": 1,
-      "status": "PRODUCING",
-      "updatedAt": "2026-06-12 14:41:47"
-    },
-    {
-      "createdAt": "2026-06-12 14:41:44",
-      "customerName": "c1",
-      "id": 2,
-      "quantity": 50,
-      "sampleId": 2,
-      "status": "RESERVED",
-      "updatedAt": "2026-06-12 14:41:44"
-    }
-  ],
-  "nextId": 3
+  "data": [],
+  "nextId": 1
 }
