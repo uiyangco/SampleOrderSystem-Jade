@@ -1,4 +1,5 @@
 #include "ProductionThread.h"
+#include "ProductionCalc.h"
 #include "../Utils.h"
 #include <algorithm>
 #include <chrono>
@@ -29,10 +30,33 @@ void ProductionThread::tick() {
         [](const ProductionJob& j) -> bool { return j.status == JobStatus::RUNNING; });
 
     if (runningIt != jobs.end()) {
-        double elapsedSec = (Utils::nowMs() - runningIt->startedAtMs) / 1000.0;
+        ProductionJob job = *runningIt;
+
+        double elapsedSec = (Utils::nowMs() - job.startedAtMs) / 1000.0;
         double elapsedMin = elapsedSec / timeScale_;
-        if (elapsedMin >= static_cast<double>(runningIt->totalMinutes)) {
-            completeJob(*runningIt);
+
+        // 단위당 생산 시간 (분)
+        double perUnitMin = job.targetQty > 0
+            ? static_cast<double>(job.totalMinutes) / job.targetQty
+            : 1.0;
+
+        int newProduced = calcProducedQty(elapsedMin, perUnitMin, job.targetQty);
+        int delta = newProduced - job.producedQty;
+
+        if (delta > 0) {
+            // 새로 생산된 수량만큼 즉시 재고에 반영
+            auto sampleOpt = sampleRepo_.read(job.sampleId);
+            if (sampleOpt) {
+                Sample s = *sampleOpt;
+                s.stock += delta;
+                sampleRepo_.update(s);
+            }
+            job.producedQty = newProduced;
+            jobRepo_.update(job);
+        }
+
+        if (newProduced >= job.targetQty) {
+            completeJob(job);
             auto updated = jobRepo_.readAll();
             startNextWaiting(updated);
         }
@@ -42,16 +66,11 @@ void ProductionThread::tick() {
 }
 
 void ProductionThread::completeJob(const ProductionJob& job) {
-    auto sampleOpt = sampleRepo_.read(job.sampleId);
-    if (sampleOpt) {
-        Sample s = *sampleOpt;
-        s.stock += job.targetQty;
-        sampleRepo_.update(s);
-    }
+    // 재고는 tick()에서 이미 증분 반영됨 — 여기서는 주문 상태만 CONFIRMED 처리
     auto orderOpt = orderRepo_.read(job.orderId);
     if (orderOpt) {
-        Order o  = *orderOpt;
-        o.status = OrderStatus::CONFIRMED;
+        Order o = *orderOpt;
+        o.status    = OrderStatus::CONFIRMED;
         o.updatedAt = Utils::nowWstring();
         orderRepo_.update(o);
     }
