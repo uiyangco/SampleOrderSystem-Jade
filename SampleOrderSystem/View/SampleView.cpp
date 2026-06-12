@@ -37,7 +37,7 @@ void SampleView::showSearchResult(const std::vector<Sample>& results) {
 Sample SampleView::promptForSample() {
     ui_.printHeader(L"시료 등록");
     Sample s;
-    s.name              = ui_.inputLine(L"  이름: ");
+    s.name              = ui_.inputNonEmptyLine(L"  이름: ");
     s.avgProductionTime = ui_.inputInt(L"  평균 생산시간(분/개): ");
     s.yield             = ui_.inputDouble(L"  수율 (0.0 ~ 1.0, 예: 0.92): ", 0.0, 1.0);
     s.stock             = ui_.inputInt(L"  초기 재고: ");

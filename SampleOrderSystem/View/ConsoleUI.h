@@ -23,6 +23,7 @@ public:
     void clear();
 
     std::wstring inputLine(const std::wstring& prompt);
+    std::wstring inputNonEmptyLine(const std::wstring& prompt);
     int          inputInt(const std::wstring& prompt);
     double       inputDouble(const std::wstring& prompt, double minVal, double maxVal);
 

@@ -76,7 +76,7 @@ OrderView::ReserveInput OrderView::promptForOrder(const std::vector<Sample>& sam
     ReserveInput in;
     in.sampleId     = ui_.inputInt(L"  시료 ID (0=뒤로): ");
     if (in.sampleId == 0) return in;
-    in.customerName = ui_.inputLine(L"  고객명: ");
+    in.customerName = ui_.inputNonEmptyLine(L"  고객명: ");
     in.quantity     = ui_.inputInt(L"  수량: ");
     return in;
 }

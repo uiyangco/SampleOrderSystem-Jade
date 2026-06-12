@@ -61,6 +61,14 @@ std::wstring ConsoleUI::inputLine(const std::wstring& prompt) {
     return line;
 }
 
+std::wstring ConsoleUI::inputNonEmptyLine(const std::wstring& prompt) {
+    while (true) {
+        std::wstring s = inputLine(prompt);
+        if (!s.empty()) return s;
+        printError(L"빈 값은 입력할 수 없습니다.");
+    }
+}
+
 int ConsoleUI::inputInt(const std::wstring& prompt) {
     while (true) {
         std::wstring s = inputLine(prompt);
