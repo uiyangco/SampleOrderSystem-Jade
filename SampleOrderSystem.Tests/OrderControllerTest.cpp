@@ -78,9 +78,10 @@ TEST(OrderControllerTest, Approve_WhenStockInsufficient_UsesYieldFormula) {
     EXPECT_CALL(sampleRepo, update(_)).Times(0);
     EXPECT_CALL(jobRepo, create(_))
         .WillOnce(Invoke([](ProductionJob& job) {
-            EXPECT_EQ(job.shortage,     7);
-            EXPECT_EQ(job.targetQty,    10);   // ceil(7/0.72)
-            EXPECT_EQ(job.totalMinutes, 60);   // 6 * 10
+            EXPECT_EQ(job.shortage,        7);
+            EXPECT_EQ(job.stockAtApproval, 3);   // stock at approval time
+            EXPECT_EQ(job.targetQty,       10);   // ceil(7/0.72)
+            EXPECT_EQ(job.totalMinutes,    60);   // 6 * 10
             EXPECT_EQ(job.status, JobStatus::WAITING);
             job.setId(1);
             return true;

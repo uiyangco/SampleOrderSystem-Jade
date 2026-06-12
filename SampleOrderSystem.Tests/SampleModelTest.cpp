@@ -101,39 +101,43 @@ TEST(OrderModelTest, RoundTrip_ProducingStatus) {
 
 TEST(ProductionJobModelTest, ToJson_ContainsAllFields) {
     ProductionJob job;
-    job.id           = 1;
-    job.orderId      = 10;
-    job.sampleId     = 2;
-    job.shortage     = 7;
-    job.targetQty    = 15;
-    job.producedQty  = 0;
-    job.totalMinutes = 150;
-    job.status       = JobStatus::WAITING;
+    job.id              = 1;
+    job.orderId         = 10;
+    job.sampleId        = 2;
+    job.shortage        = 7;
+    job.stockAtApproval = 30;
+    job.targetQty       = 15;
+    job.producedQty     = 0;
+    job.totalMinutes    = 150;
+    job.status          = JobStatus::WAITING;
 
     JsonValue j = job.toJson();
-    EXPECT_EQ(j["id"].getInt(),           1);
-    EXPECT_EQ(j["orderId"].getInt(),      10);
-    EXPECT_EQ(j["shortage"].getInt(),     7);
-    EXPECT_EQ(j["targetQty"].getInt(),    15);
-    EXPECT_EQ(j["totalMinutes"].getInt(), 150);
-    EXPECT_EQ(j["status"].getString(),    "WAITING");
+    EXPECT_EQ(j["id"].getInt(),              1);
+    EXPECT_EQ(j["orderId"].getInt(),         10);
+    EXPECT_EQ(j["shortage"].getInt(),        7);
+    EXPECT_EQ(j["stockAtApproval"].getInt(), 30);
+    EXPECT_EQ(j["targetQty"].getInt(),       15);
+    EXPECT_EQ(j["totalMinutes"].getInt(),    150);
+    EXPECT_EQ(j["status"].getString(),       "WAITING");
 }
 
 TEST(ProductionJobModelTest, FromJson_RestoresRunningStatus) {
     JsonValue j = JsonValue::makeObject();
-    j["id"]           = JsonValue(2);
-    j["orderId"]      = JsonValue(20);
-    j["sampleId"]     = JsonValue(3);
-    j["shortage"]     = JsonValue(5);
-    j["targetQty"]    = JsonValue(8);
-    j["producedQty"]  = JsonValue(3);
-    j["totalMinutes"] = JsonValue(80);
-    j["startedAtMs"]  = JsonValue(0);
-    j["startedAt"]    = JsonValue(std::string(""));
-    j["status"]       = JsonValue(std::string("RUNNING"));
+    j["id"]              = JsonValue(2);
+    j["orderId"]         = JsonValue(20);
+    j["sampleId"]        = JsonValue(3);
+    j["shortage"]        = JsonValue(5);
+    j["stockAtApproval"] = JsonValue(42);
+    j["targetQty"]       = JsonValue(8);
+    j["producedQty"]     = JsonValue(3);
+    j["totalMinutes"]    = JsonValue(80);
+    j["startedAtMs"]     = JsonValue(0);
+    j["startedAt"]       = JsonValue(std::string(""));
+    j["status"]          = JsonValue(std::string("RUNNING"));
 
     ProductionJob job = ProductionJob::fromJson(j);
-    EXPECT_EQ(job.status,   JobStatus::RUNNING);
-    EXPECT_EQ(job.orderId,  20);
-    EXPECT_EQ(job.shortage, 5);
+    EXPECT_EQ(job.status,          JobStatus::RUNNING);
+    EXPECT_EQ(job.orderId,         20);
+    EXPECT_EQ(job.shortage,        5);
+    EXPECT_EQ(job.stockAtApproval, 42);
 }
