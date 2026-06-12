@@ -105,6 +105,38 @@ TEST(OrderControllerTest, Approve_WhenStockInsufficient_UsesYieldFormula) {
     ctrl.approve(11);
 }
 
+// ── approve: yield=0(미설정)일 때 부족분을 그대로 생산량으로 사용 ────────────
+
+TEST(OrderControllerTest, Approve_WhenYieldIsZero_UsesShortageAsTargetQty) {
+    MockOrderRepository         orderRepo;
+    MockSampleRepository        sampleRepo;
+    MockProductionJobRepository jobRepo;
+
+    Order o; o.setId(12); o.sampleId = 9; o.quantity = 5;
+    o.status = OrderStatus::RESERVED;
+
+    // yield=0(미설정), stock=0 → shortage=5, targetQty=5(1:1)
+    Sample s; s.setId(9); s.stock = 0; s.yield = 0.0; s.avgProductionTime = 3;
+
+    EXPECT_CALL(orderRepo, read(12)).WillOnce(Return(o));
+    EXPECT_CALL(sampleRepo, read(9)).WillOnce(Return(s));
+    EXPECT_CALL(orderRepo,  readAll()).WillOnce(Return(std::vector<Order>{}));
+    EXPECT_CALL(jobRepo,    readAll()).WillOnce(Return(std::vector<ProductionJob>{}));
+    EXPECT_CALL(sampleRepo, update(_)).Times(0);
+    EXPECT_CALL(jobRepo, create(_))
+        .WillOnce(Invoke([](ProductionJob& job) {
+            EXPECT_EQ(job.shortage,     5);
+            EXPECT_EQ(job.targetQty,    5);    // yield=0 → 1:1
+            EXPECT_EQ(job.totalMinutes, 15);   // 3 * 5
+            job.setId(1);
+            return true;
+        }));
+    EXPECT_CALL(orderRepo, update(_)).WillOnce(Return(true));
+
+    OrderController ctrl(orderRepo, sampleRepo, jobRepo);
+    ctrl.approve(12);
+}
+
 // ── approve: 앞선 CONFIRMED 주문이 재고를 선점한 경우 ────────────────────────
 
 TEST(OrderControllerTest, Approve_WithExistingConfirmedOrder_AccountsForCommittedStock) {
