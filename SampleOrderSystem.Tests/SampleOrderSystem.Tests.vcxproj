@@ -89,6 +89,7 @@
   <ItemGroup>
     <ClCompile Include="JsonValueTest.cpp" />
     <ClCompile Include="SampleModelTest.cpp" />
+    <ClCompile Include="OrderControllerTest.cpp" />
   </ItemGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
