@@ -3,6 +3,15 @@
 #include <algorithm>
 #include <cmath>
 
+static std::wstring msToTimeWstring(int64_t ms) {
+    time_t t = static_cast<time_t>(ms / 1000);
+    struct tm tm_info{};
+    localtime_s(&tm_info, &t);
+    wchar_t buf[32];
+    wcsftime(buf, sizeof(buf) / sizeof(wchar_t), L"%H:%M:%S", &tm_info);
+    return buf;
+}
+
 std::wstring ProductionView::findSampleName(int id, const std::vector<Sample>& samples) {
     auto it = std::find_if(samples.begin(), samples.end(),
         [id](const Sample& s) { return s.id == id; });
@@ -22,13 +31,17 @@ void ProductionView::showProductionStatus(
     double                            timeScaleSecPerMin) {
 
     ui_.printHeader(L"생산 라인");
+    ui_.printLine(L"  현재 시간: " + Utils::nowWstring(), ConsoleUI::GRAY);
 
     // ── 현재 생산 중 ─────────────────────────────────────────────────────────
+    ui_.printSeparator();
     ui_.printLine(L"▶ 현재 생산 중", ConsoleUI::CYAN);
     bool hasRunning = false;
+    int64_t runningFinishMs = Utils::nowMs();
     for (const auto& job : jobs) {
         if (job.status != JobStatus::RUNNING) continue;
         hasRunning = true;
+
         double elapsedSec = 0.0;
         if (job.startedAtMs > 0)
             elapsedSec = (Utils::nowMs() - job.startedAtMs) / 1000.0;
@@ -37,7 +50,6 @@ void ProductionView::showProductionStatus(
             ? static_cast<int>(std::min(elapsedMin / job.totalMinutes * 100.0, 100.0))
             : 0;
 
-        // 로딩바: [████████░░░░░░░░░░░░] 40%
         constexpr int kBarWidth = 20;
         int filled = pct * kBarWidth / 100;
         std::wstring bar = L"[";
@@ -50,15 +62,19 @@ void ProductionView::showProductionStatus(
             [&job](const Order& o) { return o.id == job.orderId; });
         if (orderIt != orders.end()) orderQty = orderIt->quantity;
 
+        int64_t completionMs = job.startedAtMs
+            + static_cast<int64_t>(job.totalMinutes * timeScaleSecPerMin * 1000.0);
+        runningFinishMs = completionMs;
+
         ui_.printLine(
             L"  주문#" + std::to_wstring(job.orderId) +
             L"  시료:" + findSampleName(job.sampleId, samples) +
             L"  고객:" + findCustomerName(job.orderId, orders) +
             L"  주문량:" + std::to_wstring(orderQty) + L"개" +
-            L"  승인재고:" + std::to_wstring(job.stockAtApproval) + L"개" +
             L"  부족분:" + std::to_wstring(job.shortage) + L"개" +
             L"  실생산량:" + std::to_wstring(job.targetQty) + L"개" +
-            L"  " + bar + L" " + std::to_wstring(pct) + L"%",
+            L"  " + bar + L" " + std::to_wstring(pct) + L"%" +
+            L"  완료예정:" + msToTimeWstring(completionMs),
             ConsoleUI::GREEN);
     }
     if (!hasRunning) ui_.printLine(L"  (생산 중인 작업 없음)", ConsoleUI::GRAY);
@@ -68,13 +84,19 @@ void ProductionView::showProductionStatus(
     ui_.printLine(L"▶ 생산 대기 큐 (FIFO)", ConsoleUI::CYAN);
     int queueNum = 1;
     bool hasWaiting = false;
+    int64_t queueStartMs = runningFinishMs;
     for (const auto& job : jobs) {
         if (job.status != JobStatus::WAITING) continue;
         hasWaiting = true;
+
         int waitOrderQty = 0;
         auto waitOrderIt = std::find_if(orders.begin(), orders.end(),
             [&job](const Order& o) { return o.id == job.orderId; });
         if (waitOrderIt != orders.end()) waitOrderQty = waitOrderIt->quantity;
+
+        int64_t finishMs = queueStartMs
+            + static_cast<int64_t>(job.totalMinutes * timeScaleSecPerMin * 1000.0);
+        queueStartMs = finishMs;
 
         ui_.printLine(
             L"  [" + std::to_wstring(queueNum++) + L"] " +
@@ -82,10 +104,10 @@ void ProductionView::showProductionStatus(
             L"  시료:" + findSampleName(job.sampleId, samples) +
             L"  고객:" + findCustomerName(job.orderId, orders) +
             L"  주문량:" + std::to_wstring(waitOrderQty) + L"개" +
-            L"  승인재고:" + std::to_wstring(job.stockAtApproval) + L"개" +
             L"  부족분:" + std::to_wstring(job.shortage) + L"개" +
             L"  실생산량:" + std::to_wstring(job.targetQty) + L"개" +
-            L"  총시간:" + std::to_wstring(job.totalMinutes) + L"분",
+            L"  총시간:" + std::to_wstring(job.totalMinutes) + L"분" +
+            L"  완료예정:" + msToTimeWstring(finishMs),
             ConsoleUI::YELLOW);
     }
     if (!hasWaiting) ui_.printLine(L"  (대기 중인 작업 없음)", ConsoleUI::GRAY);
