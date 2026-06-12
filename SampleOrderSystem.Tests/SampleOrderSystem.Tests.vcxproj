@@ -82,6 +82,7 @@
     <ClCompile Include="TestMain.cpp" />
     <ClCompile Include="JsonValueTest.cpp" />
     <ClCompile Include="SampleModelTest.cpp" />
+    <ClCompile Include="SampleControllerTest.cpp" />
     <ClCompile Include="OrderControllerTest.cpp" />
     <ClCompile Include="..\SampleOrderSystem\json\JsonParser.cpp" />
     <ClCompile Include="..\SampleOrderSystem\json\JsonSerializer.cpp" />
