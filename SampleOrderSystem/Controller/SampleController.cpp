@@ -21,6 +21,10 @@ void SampleController::run() {
     }
 }
 
+bool SampleController::isDuplicateName(const std::wstring&) const {
+    return false;
+}
+
 void SampleController::doRegister() {
     Sample s  = view_.promptForSample();
     s.createdAt = Utils::nowWstring();

@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "Controller/SampleController.h"
+#include "View/ConsoleUI.h"
+#include "View/SampleView.h"
 #include "Mocks/MockSampleRepository.h"
 
 using ::testing::Return;
@@ -10,6 +12,30 @@ using ::testing::_;
 // repo_.remove(id) 가 호출되는지 확인한다.
 // UI 계층은 별도 Mock 없이 테스트하기 어려우므로
 // Repository 레벨에서 remove 호출 여부만 검증한다.
+
+TEST(SampleControllerRegisterTest, IsDuplicateName_WhenNameExists_ReturnsTrue) {
+    MockSampleRepository repo;
+    ConsoleUI ui;
+    SampleView view(ui);
+    SampleController controller(repo, view, ui);
+
+    Sample existing; existing.setId(1); existing.name = L"TestSample";
+    EXPECT_CALL(repo, readAll()).WillOnce(Return(std::vector<Sample>{existing}));
+
+    EXPECT_TRUE(controller.isDuplicateName(L"TestSample"));
+}
+
+TEST(SampleControllerRegisterTest, IsDuplicateName_WhenNameNotExists_ReturnsFalse) {
+    MockSampleRepository repo;
+    ConsoleUI ui;
+    SampleView view(ui);
+    SampleController controller(repo, view, ui);
+
+    Sample existing; existing.setId(1); existing.name = L"Other";
+    EXPECT_CALL(repo, readAll()).WillOnce(Return(std::vector<Sample>{existing}));
+
+    EXPECT_FALSE(controller.isDuplicateName(L"NewSample"));
+}
 
 TEST(SampleControllerRemoveTest, Remove_CallsRepositoryRemove) {
     MockSampleRepository repo;

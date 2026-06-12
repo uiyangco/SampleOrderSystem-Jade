@@ -10,6 +10,7 @@ public:
         : repo_(repo), view_(view), ui_(ui) {}
 
     void run();
+    bool isDuplicateName(const std::wstring& name) const;
 
 private:
     void doRegister();

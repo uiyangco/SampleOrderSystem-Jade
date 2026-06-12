@@ -91,6 +91,9 @@
     <ClCompile Include="..\SampleOrderSystem\Model\Order.cpp" />
     <ClCompile Include="..\SampleOrderSystem\Model\ProductionJob.cpp" />
     <ClCompile Include="..\SampleOrderSystem\Controller\OrderController.cpp" />
+    <ClCompile Include="..\SampleOrderSystem\Controller\SampleController.cpp" />
+    <ClCompile Include="..\SampleOrderSystem\View\ConsoleUI.cpp" />
+    <ClCompile Include="..\SampleOrderSystem\View\SampleView.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
