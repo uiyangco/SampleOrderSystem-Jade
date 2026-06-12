@@ -45,11 +45,18 @@ void ProductionView::showProductionStatus(
             bar += (i < filled) ? L"█" : L"░";
         bar += L"]";
 
+        int orderQty = 0;
+        auto orderIt = std::find_if(orders.begin(), orders.end(),
+            [&job](const Order& o) { return o.id == job.orderId; });
+        if (orderIt != orders.end()) orderQty = orderIt->quantity;
+
         ui_.printLine(
             L"  주문#" + std::to_wstring(job.orderId) +
             L"  시료:" + findSampleName(job.sampleId, samples) +
             L"  고객:" + findCustomerName(job.orderId, orders) +
-            L"  목표:" + std::to_wstring(job.targetQty) + L"개" +
+            L"  주문량:" + std::to_wstring(orderQty) + L"개" +
+            L"  부족분:" + std::to_wstring(job.shortage) + L"개" +
+            L"  실생산량:" + std::to_wstring(job.targetQty) + L"개" +
             L"  " + bar + L" " + std::to_wstring(pct) + L"%",
             ConsoleUI::GREEN);
     }
@@ -63,13 +70,20 @@ void ProductionView::showProductionStatus(
     for (const auto& job : jobs) {
         if (job.status != JobStatus::WAITING) continue;
         hasWaiting = true;
+        int waitOrderQty = 0;
+        auto waitOrderIt = std::find_if(orders.begin(), orders.end(),
+            [&job](const Order& o) { return o.id == job.orderId; });
+        if (waitOrderIt != orders.end()) waitOrderQty = waitOrderIt->quantity;
+
         ui_.printLine(
             L"  [" + std::to_wstring(queueNum++) + L"] " +
             L"주문#" + std::to_wstring(job.orderId) +
             L"  시료:" + findSampleName(job.sampleId, samples) +
             L"  고객:" + findCustomerName(job.orderId, orders) +
-            L"  목표:" + std::to_wstring(job.targetQty) +
-            L"개  총시간:" + std::to_wstring(job.totalMinutes) + L"분",
+            L"  주문량:" + std::to_wstring(waitOrderQty) + L"개" +
+            L"  부족분:" + std::to_wstring(job.shortage) + L"개" +
+            L"  실생산량:" + std::to_wstring(job.targetQty) + L"개" +
+            L"  총시간:" + std::to_wstring(job.totalMinutes) + L"분",
             ConsoleUI::YELLOW);
     }
     if (!hasWaiting) ui_.printLine(L"  (대기 중인 작업 없음)", ConsoleUI::GRAY);

@@ -1,5 +1,7 @@
 #include "OrderController.h"
 #include "../Utils.h"
+#include <cmath>
+#include <algorithm>
 
 void OrderController::reserve(int sampleId, const std::wstring& customerName, int quantity) {
     if (!sampleRepo_.read(sampleId)) return;
@@ -23,13 +25,41 @@ void OrderController::approve(int orderId) {
     if (!sampleOpt) return;
     const Sample& sample = *sampleOpt;
 
-    // 항상 생산 → PRODUCING (재고 충분 여부 무관)
+    // 큐 고려 유효 가용량 계산
+    auto allOrders = orderRepo_.readAll();
+    auto allJobs   = jobRepo_.readAll();
+
+    int committedFromStock = 0;  // CONFIRMED 주문이 선점한 재고
+    int committedFromJobs  = 0;  // PRODUCING 주문이 선점한 생산 예정량
+    int plannedProduction  = 0;  // WAITING/RUNNING 잡의 예정 생산량
+
+    for (const auto& o : allOrders) {
+        if (o.sampleId != order.sampleId) continue;
+        if (o.status == OrderStatus::CONFIRMED) committedFromStock += o.quantity;
+        if (o.status == OrderStatus::PRODUCING) committedFromJobs  += o.quantity;
+    }
+    for (const auto& j : allJobs) {
+        if (j.sampleId != order.sampleId) continue;
+        if (j.status == JobStatus::WAITING || j.status == JobStatus::RUNNING)
+            plannedProduction += j.targetQty;
+    }
+
+    int effective = sample.stock - committedFromStock + plannedProduction - committedFromJobs;
+    int shortage  = (std::max)(0, order.quantity - (std::max)(0, effective));
+
+    int targetQty = 0;
+    if (shortage > 0 && sample.yield > 0.0) {
+        targetQty = static_cast<int>(
+            std::ceil(static_cast<double>(shortage) / (sample.yield * 0.9)));
+    }
+
     ProductionJob job;
     job.orderId      = orderId;
     job.sampleId     = order.sampleId;
-    job.targetQty    = order.quantity;
+    job.shortage     = shortage;
+    job.targetQty    = targetQty;
     job.producedQty  = 0;
-    job.totalMinutes = sample.avgProductionTime * order.quantity;
+    job.totalMinutes = sample.avgProductionTime * targetQty;
     job.status       = JobStatus::WAITING;
     jobRepo_.create(job);
 

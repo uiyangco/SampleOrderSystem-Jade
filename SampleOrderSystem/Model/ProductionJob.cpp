@@ -6,6 +6,7 @@ JsonValue ProductionJob::toJson() const {
     j["id"]           = JsonValue(id);
     j["orderId"]      = JsonValue(orderId);
     j["sampleId"]     = JsonValue(sampleId);
+    j["shortage"]     = JsonValue(shortage);
     j["targetQty"]    = JsonValue(targetQty);
     j["producedQty"]  = JsonValue(producedQty);
     j["totalMinutes"] = JsonValue(totalMinutes);
@@ -20,6 +21,7 @@ ProductionJob ProductionJob::fromJson(const JsonValue& j) {
     job.id           = j["id"].getInt();
     job.orderId      = j["orderId"].getInt();
     job.sampleId     = j["sampleId"].getInt();
+    job.shortage     = j.contains("shortage") ? j["shortage"].getInt() : 0;
     job.targetQty    = j["targetQty"].getInt();
     job.producedQty  = j["producedQty"].getInt();
     job.totalMinutes = j["totalMinutes"].getInt();
