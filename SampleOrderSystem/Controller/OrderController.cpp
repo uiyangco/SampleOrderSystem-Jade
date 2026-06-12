@@ -48,9 +48,12 @@ void OrderController::approve(int orderId) {
     int shortage  = (std::max)(0, order.quantity - (std::max)(0, effective));
 
     int targetQty = 0;
-    if (shortage > 0 && sample.yield > 0.0) {
-        targetQty = static_cast<int>(
-            std::ceil(static_cast<double>(shortage) / (sample.yield * 0.9)));
+    if (shortage > 0) {
+        if (sample.yield > 0.0)
+            targetQty = static_cast<int>(
+                std::ceil(static_cast<double>(shortage) / (sample.yield * 0.9)));
+        else
+            targetQty = shortage;  // yield 미설정 시 1:1 생산
     }
 
     ProductionJob job;
