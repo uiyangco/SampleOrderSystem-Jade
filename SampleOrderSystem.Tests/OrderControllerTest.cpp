@@ -137,6 +137,50 @@ TEST(OrderControllerTest, Approve_WhenYieldIsZero_UsesShortageAsTargetQty) {
     ctrl.approve(12);
 }
 
+// ── approve: RUNNING 잡은 잔여 생산량(targetQty-producedQty)만 계산에 포함 ───
+
+TEST(OrderControllerTest, Approve_WithRunningJob_OnlyCountsRemainingProduction) {
+    MockOrderRepository         orderRepo;
+    MockSampleRepository        sampleRepo;
+    MockProductionJobRepository jobRepo;
+
+    Order newOrder; newOrder.setId(40); newOrder.sampleId = 6; newOrder.quantity = 25;
+    newOrder.status = OrderStatus::RESERVED;
+
+    // stock=40 (running job이 이미 40개 생산 → 재고 반영됨)
+    // running job: targetQty=50, producedQty=40 → 잔여=10
+    // producing order: qty=30
+    // effective = 40 + (50-40) - 0 - 30 = 20
+    // shortage = 25-20 = 5, targetQty = ceil(5/0.81) = 7
+    Sample s; s.setId(6); s.stock = 40; s.yield = 0.9; s.avgProductionTime = 5;
+
+    Order producing; producing.setId(7); producing.sampleId = 6;
+    producing.quantity = 30; producing.status = OrderStatus::PRODUCING;
+
+    ProductionJob runningJob; runningJob.setId(1);
+    runningJob.orderId = 7; runningJob.sampleId = 6;
+    runningJob.targetQty = 50; runningJob.producedQty = 40;
+    runningJob.status = JobStatus::RUNNING;
+
+    EXPECT_CALL(orderRepo, read(40)).WillOnce(Return(newOrder));
+    EXPECT_CALL(sampleRepo, read(6)).WillOnce(Return(s));
+    EXPECT_CALL(orderRepo,  readAll()).WillOnce(Return(std::vector<Order>{producing}));
+    EXPECT_CALL(jobRepo,    readAll()).WillOnce(Return(std::vector<ProductionJob>{runningJob}));
+    EXPECT_CALL(sampleRepo, update(_)).Times(0);
+    EXPECT_CALL(jobRepo, create(_))
+        .WillOnce(Invoke([](ProductionJob& job) {
+            EXPECT_EQ(job.shortage,     5);
+            EXPECT_EQ(job.targetQty,    7);    // ceil(5/0.81)
+            EXPECT_EQ(job.totalMinutes, 35);   // 5 * 7
+            job.setId(2);
+            return true;
+        }));
+    EXPECT_CALL(orderRepo, update(_)).WillOnce(Return(true));
+
+    OrderController ctrl(orderRepo, sampleRepo, jobRepo);
+    ctrl.approve(40);
+}
+
 // ── approve: 앞선 CONFIRMED 주문이 재고를 선점한 경우 ────────────────────────
 
 TEST(OrderControllerTest, Approve_WithExistingConfirmedOrder_AccountsForCommittedStock) {
