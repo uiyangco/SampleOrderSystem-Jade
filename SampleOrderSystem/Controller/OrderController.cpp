@@ -47,6 +47,13 @@ void OrderController::approve(int orderId) {
             targetQty = shortage;  // yield 미설정 시 1:1 생산
     }
 
+    if (shortage == 0) {
+        order.status    = OrderStatus::CONFIRMED;
+        order.updatedAt = Utils::nowWstring();
+        orderRepo_.update(order);
+        return;
+    }
+
     ProductionJob job;
     job.orderId      = orderId;
     job.sampleId     = order.sampleId;
