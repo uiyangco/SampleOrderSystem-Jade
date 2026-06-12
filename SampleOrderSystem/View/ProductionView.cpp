@@ -55,6 +55,7 @@ void ProductionView::showProductionStatus(
             L"  시료:" + findSampleName(job.sampleId, samples) +
             L"  고객:" + findCustomerName(job.orderId, orders) +
             L"  주문량:" + std::to_wstring(orderQty) + L"개" +
+            L"  승인재고:" + std::to_wstring(job.stockAtApproval) + L"개" +
             L"  부족분:" + std::to_wstring(job.shortage) + L"개" +
             L"  실생산량:" + std::to_wstring(job.targetQty) + L"개" +
             L"  " + bar + L" " + std::to_wstring(pct) + L"%",
@@ -81,6 +82,7 @@ void ProductionView::showProductionStatus(
             L"  시료:" + findSampleName(job.sampleId, samples) +
             L"  고객:" + findCustomerName(job.orderId, orders) +
             L"  주문량:" + std::to_wstring(waitOrderQty) + L"개" +
+            L"  승인재고:" + std::to_wstring(job.stockAtApproval) + L"개" +
             L"  부족분:" + std::to_wstring(job.shortage) + L"개" +
             L"  실생산량:" + std::to_wstring(job.targetQty) + L"개" +
             L"  총시간:" + std::to_wstring(job.totalMinutes) + L"분",

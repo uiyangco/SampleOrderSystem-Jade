@@ -55,10 +55,11 @@ void OrderController::approve(int orderId) {
     }
 
     ProductionJob job;
-    job.orderId      = orderId;
-    job.sampleId     = order.sampleId;
-    job.shortage     = shortage;
-    job.targetQty    = targetQty;
+    job.orderId         = orderId;
+    job.sampleId        = order.sampleId;
+    job.shortage        = shortage;
+    job.stockAtApproval = sample.stock;
+    job.targetQty       = targetQty;
     job.producedQty  = 0;
     job.totalMinutes = sample.avgProductionTime * targetQty;
     job.status       = JobStatus::WAITING;

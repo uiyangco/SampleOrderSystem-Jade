@@ -28,6 +28,7 @@ struct ProductionJob {
     int          orderId = 0;
     int          sampleId = 0;
     int          shortage = 0;
+    int          stockAtApproval = 0;
     int          targetQty = 0;
     int          producedQty = 0;
     int          totalMinutes = 0;

@@ -6,8 +6,9 @@ JsonValue ProductionJob::toJson() const {
     j["id"]           = JsonValue(id);
     j["orderId"]      = JsonValue(orderId);
     j["sampleId"]     = JsonValue(sampleId);
-    j["shortage"]     = JsonValue(shortage);
-    j["targetQty"]    = JsonValue(targetQty);
+    j["shortage"]        = JsonValue(shortage);
+    j["stockAtApproval"] = JsonValue(stockAtApproval);
+    j["targetQty"]       = JsonValue(targetQty);
     j["producedQty"]  = JsonValue(producedQty);
     j["totalMinutes"] = JsonValue(totalMinutes);
     j["startedAtMs"]  = JsonValue(static_cast<int>(startedAtMs));
@@ -21,8 +22,9 @@ ProductionJob ProductionJob::fromJson(const JsonValue& j) {
     job.id           = j["id"].getInt();
     job.orderId      = j["orderId"].getInt();
     job.sampleId     = j["sampleId"].getInt();
-    job.shortage     = j.contains("shortage") ? j["shortage"].getInt() : 0;
-    job.targetQty    = j["targetQty"].getInt();
+    job.shortage        = j.contains("shortage")        ? j["shortage"].getInt()        : 0;
+    job.stockAtApproval = j.contains("stockAtApproval") ? j["stockAtApproval"].getInt() : 0;
+    job.targetQty       = j["targetQty"].getInt();
     job.producedQty  = j["producedQty"].getInt();
     job.totalMinutes = j["totalMinutes"].getInt();
     job.startedAtMs  = j.contains("startedAtMs") ? static_cast<int64_t>(j["startedAtMs"].getInt()) : 0;
