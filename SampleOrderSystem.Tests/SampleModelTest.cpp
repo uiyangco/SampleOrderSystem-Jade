@@ -141,3 +141,21 @@ TEST(ProductionJobModelTest, FromJson_RestoresRunningStatus) {
     EXPECT_EQ(job.shortage,        5);
     EXPECT_EQ(job.stockAtApproval, 42);
 }
+
+TEST(ProductionJobModelTest, StartedAtMs_LargeTimestamp_PreservedAfterSerialize) {
+    ProductionJob job;
+    job.id           = 1;
+    job.orderId      = 1;
+    job.sampleId     = 1;
+    job.shortage     = 0;
+    job.stockAtApproval = 0;
+    job.targetQty    = 10;
+    job.producedQty  = 0;
+    job.totalMinutes = 100;
+    job.startedAtMs  = 1748000000000LL;  // ~June 2025 Unix ms — overflows int32
+    job.startedAt    = L"";
+    job.status       = JobStatus::RUNNING;
+
+    ProductionJob restored = ProductionJob::fromJson(job.toJson());
+    EXPECT_EQ(restored.startedAtMs, 1748000000000LL);
+}
