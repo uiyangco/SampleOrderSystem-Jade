@@ -33,8 +33,11 @@ static void initConsole() {
 int wmain() {
     initConsole();
 
-    // 1분 = 5초 (테스트 편의용; 실운영 시 60.0으로 변경)
-    constexpr double kTimeScaleSecPerMin = 1.0;
+    // ★ 시간 스케일 설정 ★
+    // 생산시간 1분을 실제 몇 초로 처리할지 결정한다.
+    //   60.0 → 실운영 (1분 = 60초)
+    //    1.0 → 빠른 테스트 (1분 = 1초)
+    constexpr double kTimeScaleSecPerMin = 60.0;
 
     // ── Repositories ────────────────────────────────────────────────────────
     SampleRepository        sampleRepo("data/samples.json");
